@@ -1,60 +1,25 @@
-# Stockroom
+﻿# Northstar IT Helpdesk
 
-A React 19 + Laravel 13 inventory starter for a furniture and home goods workspace. The interface includes a dashboard, product catalog, low-stock alerts, warehouse and category filters, stock movement history, and CSV export.
+A React and Laravel helpdesk application for creating and managing support tickets. React Router handles the client side views; Laravel validates and persists ticket records through Eloquent.
 
-## Start locally
+## Run locally
 
-Requirements: PHP 8.3+, Composer, Node.js 20.19+ or 22.12+, and PHP SQLite support. The project was verified with PHP 8.4 and Node 24.
+Requirements: PHP 8.3+, Composer, Node.js 20.19+ or 22.12+, and PostgreSQL.
 
-```powershell
-cd backend
-composer install
-Copy-Item .env.example .env # first setup only; keep an existing .env
-php artisan key:generate
-# Create the SQLite file if it does not already exist.
-if (!(Test-Path database/database.sqlite)) { New-Item database/database.sqlite -ItemType File }
-php artisan migrate --seed
-cd ../frontend
-npm ci
-cd ..
-```
+1. Create a PostgreSQL database (default name: `helpdesk`) and set `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, and `DB_PASSWORD` in `backend/.env`.
+2. In `backend`, install dependencies, copy `.env.example` to `.env` for first setup, generate an app key, and run `php artisan migrate`.
+3. In `frontend`, run `npm install`.
+4. Start `npm run dev:backend` and `npm run dev:frontend` from the project root.
 
-In separate terminals from the project root:
+Open http://127.0.0.1:5173. Vite proxies `/api` to Laravel on port 8017.
 
-```powershell
-npm run dev:backend
-npm run dev:frontend
-```
+## Sign in
 
-Open http://127.0.0.1:5173. The React development server proxies `/api` to Laravel on port **8017**, configured in `frontend/vite.config.js`.
+The demo login accepts username `itadmin` and password `helpdesk123`. This is client side demonstration gating only; use real server side authentication before deployment.
 
-![Stockroom inventory dashboard](stockroom-preview.png)
+## Ticket workflow
 
-## Structure
+Ticket list, create, detail, and edit routes are protected by the client login gate. New tickets require requester name and email, issue category, priority, subject, and description. Laravel repeats validation before storing records. Tickets use an auto incrementing ID (shown as the ticket number), default to Open, and remain in PostgreSQL when the frontend or backend development servers restart.
 
-- `frontend/src/App.jsx`: application state, navigation, filters, dialogs, and API integration.
-- `frontend/src/components/`: metric cards and product illustrations.
-- `frontend/src/data.js`: demo catalog and helpers.
-- `frontend/src/styles.css`: responsive layout and visual system.
-- `backend/app/Http/Controllers/`: product, stock movement, and dashboard APIs.
-- `backend/app/Http/Requests/SaveProductRequest.php`: product validation.
-- `backend/database/migrations/`: inventory schema.
-- `backend/database/seeders/DatabaseSeeder.php`: idempotent demo catalog seed.
-- `backend/tests/Feature/InventoryTest.php`: inventory and stock validation tests.
+Ticket endpoints: `GET /api/tickets`, `POST /api/tickets`, `GET /api/tickets/{id}`, and `PUT /api/tickets/{id}`.
 
-## Behavior
-
-When Laravel is available, products and stock movements persist in SQLite. Without the API, the frontend uses clearly labeled demo mode and saves changes on the current device. Demo data is separate from database data and is not automatically imported.
-
-Stock adjustments run in database transactions, reject negative resulting inventory, and create movement records. Editing a product's stock also records the delta. Product SKUs must be unique. Prices use decimal storage. CSV exports respect the current filters and protect against spreadsheet formula interpretation.
-
-The supplier directory, workspace profile, and preferences are UI examples. Authentication, team permissions, supplier CRUD, pagination, and deployment configuration are extension points. The API is intended for local development; add authentication and authorization before hosting it.
-
-## Checks
-
-```powershell
-npm run build
-npm test
-```
-
-For a production frontend, serve `frontend/dist` and route `/api` to Laravel on the same origin. Configure the Laravel environment and database for your deployment.
